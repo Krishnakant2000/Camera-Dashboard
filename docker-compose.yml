@@ -1,0 +1,32 @@
+services:
+  # 1. The Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: camera_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. The Streaming Server (MediaMTX)
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: camera_streamer
+    restart: unless-stopped
+    ports:
+      - "8554:8554" # RTSP (Input from Go Worker)
+      - "1935:1935" # RTMP (Alternative Input)
+      - "8888:8888" # HLS (Output to Browser - Backup)
+      - "8889:8889" # WebRTC (Output to Browser - Primary/Low Latency)
+      - "9997:9997" # API (Control)
+    environment:
+      - MTX_PROTOCOLS=tcp
+      - MTX_WEBRTC_ADDITIONAL_HOSTS=127.0.0.1
+
+volumes:
+  postgres_data:
