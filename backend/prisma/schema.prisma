@@ -1,0 +1,40 @@
+// This connects to the postgres container
+datasource db {
+  provider = "postgresql"
+}
+
+// This generates the client library so our code can use it
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. User Model (for Login)
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // In a real app, this should be hashed!
+  createdAt DateTime @default(now())
+}
+
+// 2. Camera Model (The core of our app)
+model Camera {
+  id          String   @id @default(uuid())
+  name        String
+  rtspUrl     String   // The video source
+  location    String?
+  status      String   @default("active") // "active" or "inactive"
+  createdAt   DateTime @default(now())
+  alerts      Alert[]
+}
+
+// 3. Alert Model (When a face is found)
+model Alert {
+  id        String   @id @default(uuid())
+  message   String
+  imageUrl  String?  // Optional: URL to a snapshot of the face
+  createdAt DateTime @default(now())
+  
+  // Link alert to a camera
+  cameraId  String
+  camera    Camera   @relation(fields: [cameraId], references: [id])
+}
