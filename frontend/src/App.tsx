@@ -1,35 +1,108 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2 } from 'lucide-react';
+import type { Camera } from './types';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch cameras from our Hono Backend
+  const fetchCameras = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/cameras');
+      const data = await res.json();
+      setCameras(data);
+    } catch (error) {
+      console.error("Failed to fetch cameras:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Run once when the app loads
+  useEffect(() => {
+    fetchCameras();
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex">
+
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
+        <div className="flex items-center gap-3 mb-8 px-2 text-blue-400">
+          <Activity size={28} />
+          <h1 className="text-xl font-bold text-white">VisionOS</h1>
+        </div>
+
+        <nav className="flex-1 space-y-2">
+          <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-blue-400 rounded-lg transition-colors">
+            <LayoutGrid size={20} />
+            <span className="font-medium">Live Grid</span>
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800 text-gray-400 hover:text-gray-200 rounded-lg transition-colors">
+            <CameraIcon size={20} />
+            <span className="font-medium">All Cameras</span>
+          </button>
+        </nav>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col">
+
+        {/* TOP NAVBAR */}
+        <header className="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-gray-900/50">
+          <h2 className="text-lg font-semibold">Live Camera Feeds</h2>
+          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+            <Plus size={18} />
+            Add Camera
+          </button>
+        </header>
+
+        {/* CAMERA GRID */}
+        <div className="p-8 flex-1 overflow-y-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+          ) : cameras.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <CameraIcon size={64} className="mb-4 opacity-20" />
+              <p className="text-xl font-medium text-gray-400">No cameras configured</p>
+              <p className="mt-2 text-sm">Click 'Add Camera' to register your first stream.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {cameras.map((cam) => (
+                <div key={cam.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col">
+                  {/* VIDEO PLACEHOLDER (Will be replaced by WebRTC player) */}
+                  <div className="aspect-video bg-black relative flex items-center justify-center border-b border-gray-800">
+                    <span className="text-gray-700 font-mono text-sm">STREAM OFFLINE</span>
+                    <div className="absolute top-3 right-3 flex items-center gap-2">
+                      <span className="flex h-3 w-3 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CAMERA CARD FOOTER */}
+                  <div className="p-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-gray-200">{cam.name}</h3>
+                      <p className="text-xs text-gray-500">{cam.location || 'Unknown location'}</p>
+                    </div>
+                    <button className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;

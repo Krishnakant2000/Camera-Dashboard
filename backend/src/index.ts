@@ -49,6 +49,7 @@ app.get('/cameras', async (c) => {
         })
         return c.json(cameras)
     } catch (e) {
+        console.error("DATABASE ERROR:", e)
         return c.json({ error: 'Failed to fetch cameras' }, 500)
     }
 })
