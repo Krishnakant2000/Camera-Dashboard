@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2 } from 'lucide-react';
 import type { Camera } from './types';
+import AddCameraModal from './components/AddCameraModal';
 
 function App() {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch cameras from our Hono Backend
   const fetchCameras = async () => {
@@ -31,7 +33,7 @@ function App() {
       <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
         <div className="flex items-center gap-3 mb-8 px-2 text-blue-400">
           <Activity size={28} />
-          <h1 className="text-xl font-bold text-white">VisionOS</h1>
+          <h1 className="text-xl font-bold text-white">Camera Dashboard</h1>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -52,7 +54,9 @@ function App() {
         {/* TOP NAVBAR */}
         <header className="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-gray-900/50">
           <h2 className="text-lg font-semibold">Live Camera Feeds</h2>
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
             <Plus size={18} />
             Add Camera
           </button>
@@ -101,6 +105,11 @@ function App() {
           )}
         </div>
       </main>
+      <AddCameraModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchCameras}
+      />
     </div>
   );
 }
