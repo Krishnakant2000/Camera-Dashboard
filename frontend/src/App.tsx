@@ -21,6 +21,23 @@ function App() {
     }
   };
 
+  // Delete a camera
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this camera?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/cameras/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        fetchCameras(); // Refresh the grid to remove the deleted camera
+      }
+    } catch (error) {
+      console.error("Failed to delete camera:", error);
+    }
+  };
+
   // Run once when the app loads
   useEffect(() => {
     fetchCameras();
@@ -95,7 +112,9 @@ function App() {
                       <h3 className="font-medium text-gray-200">{cam.name}</h3>
                       <p className="text-xs text-gray-500">{cam.location || 'Unknown location'}</p>
                     </div>
-                    <button className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                    <button
+                      onClick={() => handleDelete(cam.id)}
+                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                       <Trash2 size={18} />
                     </button>
                   </div>
