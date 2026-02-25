@@ -63,6 +63,28 @@ function App() {
     }
   };
 
+  // Toggle Camera Settings (AI or Stream Status)
+  const handleToggle = async (id: string, field: 'status' | 'aiEnabled', currentValue: any) => {
+    let newValue;
+    if (field === 'status') {
+      newValue = currentValue === 'active' ? 'inactive' : 'active';
+    } else {
+      newValue = !currentValue;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:3000/cameras/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: newValue }),
+      });
+
+      if (res.ok) fetchCameras(); // Refresh UI instantly
+    } catch (error) {
+      console.error(`Failed to toggle ${field}:`, error);
+    }
+  };
+
   // Run once when the app loads
   useEffect(() => {
     fetchCameras();
@@ -147,12 +169,14 @@ function App() {
                     <div className="flex items-center gap-1.5 bg-gray-950 p-1 rounded-lg border border-gray-800">
                       <button
                         title="Toggle AI Face Detection"
+                        onClick={() => handleToggle(cam.id, 'aiEnabled', cam.aiEnabled !== false)}
                         className={`p-2 rounded-md transition-all ${cam.aiEnabled !== false ? 'text-blue-400 bg-blue-400/10' : 'text-gray-500 hover:text-gray-300'}`}
                       >
                         <Brain size={16} />
                       </button>
                       <button
                         title="Start/Stop Stream"
+                        onClick={() => handleToggle(cam.id, 'status', cam.status)}
                         className={`p-2 rounded-md transition-all ${cam.status === 'active' ? 'text-green-400 bg-green-400/10' : 'text-gray-500 hover:text-gray-300'}`}
                       >
                         <Power size={16} />

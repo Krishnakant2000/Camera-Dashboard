@@ -18,6 +18,7 @@ type Camera struct {
 	Name    string `json:"name"`
 	RTSPUrl string `json:"rtspUrl"`
 	Status  string `json:"status"`
+	AiEnabled bool   `json:"aiEnabled"`
 }
 
 var activeStreams = make(map[string]*exec.Cmd)
@@ -72,7 +73,6 @@ func setupAI() {
 func fetchAndProcessCameras() {
 	resp, err := http.Get("http://localhost:3000/cameras")
 	if err != nil {
-		fmt.Println("❌ Error connecting to Backend:", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -86,20 +86,43 @@ func fetchAndProcessCameras() {
 	for _, cam := range cameras {
 		dbCameras[cam.ID] = true
 
-		if _, exists := activeStreams[cam.ID]; !exists {
-			fmt.Printf("🎬 Starting Video Stream: %s\n", cam.Name)
-			startStream(cam)
-			
-			fmt.Printf("🤖 Starting AI Pipeline: %s\n", cam.Name)
-			startAIPipeline(cam)
+		// MANAGE LIVE VIDEO STREAM (The Power Button)
+		if cam.Status == "active" {
+			if _, exists := activeStreams[cam.ID]; !exists {
+				fmt.Printf("🎬 Starting Video Stream: %s\n", cam.Name)
+				startStream(cam)
+			}
+		} else {
+			// If status is inactive but stream is running, KILL IT
+			if cmd, exists := activeStreams[cam.ID]; exists {
+				fmt.Printf("🛑 Stopping Video Stream: %s\n", cam.Name)
+				cmd.Process.Kill()
+				delete(activeStreams, cam.ID)
+			}
+		}
+
+		// MANAGE AI PIPELINE (The Brain Button)
+		// AI should only run if the camera is active AND AI is enabled
+		if cam.AiEnabled && cam.Status == "active" {
+			if _, exists := activeAI[cam.ID]; !exists {
+				fmt.Printf("🤖 Starting AI Pipeline: %s\n", cam.Name)
+				startAIPipeline(cam)
+			}
+		} else {
+			// If AI is disabled (or camera is off) but AI is running, KILL IT
+			if aiCmd, exists := activeAI[cam.ID]; exists {
+				fmt.Printf("💤 Pausing AI Pipeline: %s\n", cam.Name)
+				aiCmd.Process.Kill()
+				delete(activeAI, cam.ID)
+			}
 		}
 	}
 
+	// CLEANUP DELETED CAMERAS (The Trash Can)
 	for id, cmd := range activeStreams {
 		if !dbCameras[id] {
 			cmd.Process.Kill()
 			delete(activeStreams, id)
-			
 			if aiCmd, ok := activeAI[id]; ok {
 				aiCmd.Process.Kill()
 				delete(activeAI, id)

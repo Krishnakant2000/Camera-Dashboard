@@ -22,6 +22,7 @@ model Camera {
   name        String
   rtspUrl     String   // The video source
   location    String?
+  aiEnabled   Boolean  @default(true)     
   status      String   @default("active") // "active" or "inactive"
   createdAt   DateTime @default(now())
   alerts      Alert[]

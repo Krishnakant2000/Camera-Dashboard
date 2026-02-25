@@ -85,6 +85,27 @@ app.delete('/cameras/:id', async (c) => {
     return c.json({ success: true })
 })
 
+// PATCH: Update a camera's settings (Toggle AI or Status)
+app.patch('/cameras/:id', async (c) => {
+    const id = c.req.param('id')
+    const body = await c.req.json()
+
+    try {
+        const updatedCamera = await prisma.camera.update({
+            where: { id },
+            data: {
+                // Only update the fields that were actually sent in the request
+                ...(body.status !== undefined && { status: body.status }),
+                ...(body.aiEnabled !== undefined && { aiEnabled: body.aiEnabled })
+            }
+        })
+        return c.json(updatedCamera)
+    } catch (e) {
+        console.error("Failed to update camera:", e)
+        return c.json({ error: 'Failed to update' }, 500)
+    }
+})
+
 // --- ALERT ROUTE (Called by Go Worker) ---
 app.post('/alerts', async (c) => {
     const body = await c.req.json()
