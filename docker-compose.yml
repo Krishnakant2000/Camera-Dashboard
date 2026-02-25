@@ -24,6 +24,7 @@ services:
       - "8888:8888" # HLS (Output to Browser - Backup)
       - "8889:8889" # WebRTC (Output to Browser - Primary/Low Latency)
       - "9997:9997" # API (Control)
+      - "8189:8189/udp" # THE MAGIC WEBRTC MEDIA PORT
     environment:
       - MTX_PROTOCOLS=tcp
       - MTX_WEBRTC_ADDITIONAL_HOSTS=127.0.0.1
