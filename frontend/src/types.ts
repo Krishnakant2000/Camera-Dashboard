@@ -4,6 +4,7 @@ export interface Camera {
     rtspUrl: string;
     location: string | null;
     status: string;
+    aiEnabled?: boolean;
     createdAt: string;
 }
 

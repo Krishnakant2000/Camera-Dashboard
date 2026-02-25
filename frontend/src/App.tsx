@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2 } from 'lucide-react';
+import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2, Brain, Power } from 'lucide-react';
 import type { Alert, Camera } from './types';
 import AddCameraModal from './components/AddCameraModal';
 import WebRTCPlayer from './components/WebRTCPlayer';
@@ -119,12 +119,13 @@ function App() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {cameras.map((cam) => (
-                <div key={cam.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col">
-                  {/* LIVE VIDEO PLAYER */}
-                  <div className="aspect-video bg-black relative flex items-center justify-center border-b border-gray-800">
+                <div key={cam.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col group transition-all hover:border-gray-700">
+
+                  {/* VIDEO PLAYER (No changes here) */}
+                  <div className="aspect-video bg-black relative flex items-center justify-center border-b border-gray-800 group-hover:border-gray-700 transition-colors">
                     <WebRTCPlayer cameraId={cam.id} />
-                    {/* Live Indicator overlay */}
-                    <div className="absolute top-3 right-3 flex items-center gap-2 bg-black/50 px-2 py-1 rounded text-xs font-bold tracking-widest text-green-500">
+
+                    <div className="absolute top-3 right-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest text-green-500 border border-green-500/20">
                       <span className="flex h-2 w-2 relative">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -133,42 +134,57 @@ function App() {
                     </div>
                   </div>
 
-                  {/* CAMERA CARD FOOTER */}
-                  <div className="p-4 flex items-center justify-between border-b border-gray-800">
+                  {/* POLISHED CARD HEADER & CONTROLS */}
+                  <div className="p-4 border-b border-gray-800 bg-gray-900 flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium text-gray-200">{cam.name}</h3>
-                      <p className="text-xs text-gray-500">{cam.location || 'Unknown location'}</p>
+                      <h3 className="font-semibold text-gray-100 flex items-center gap-2">
+                        {cam.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">{cam.location || 'Unknown location'} • {cam.rtspUrl.split('@').pop()?.split('/')[0] || 'Local'}</p>
                     </div>
-                    <button
-                      onClick={() => handleDelete(cam.id)}
-                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
-                      <Trash2 size={18} />
-                    </button>
+
+                    {/* ACTION BUTTONS */}
+                    <div className="flex items-center gap-1.5 bg-gray-950 p-1 rounded-lg border border-gray-800">
+                      <button
+                        title="Toggle AI Face Detection"
+                        className={`p-2 rounded-md transition-all ${cam.aiEnabled !== false ? 'text-blue-400 bg-blue-400/10' : 'text-gray-500 hover:text-gray-300'}`}
+                      >
+                        <Brain size={16} />
+                      </button>
+                      <button
+                        title="Start/Stop Stream"
+                        className={`p-2 rounded-md transition-all ${cam.status === 'active' ? 'text-green-400 bg-green-400/10' : 'text-gray-500 hover:text-gray-300'}`}
+                      >
+                        <Power size={16} />
+                      </button>
+                      <div className="w-px h-4 bg-gray-800 mx-1"></div>
+                      <button
+                        title="Delete Camera"
+                        onClick={() => handleDelete(cam.id)}
+                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* REAL-TIME ALERTS FEED */}
-                  <div className="p-4 bg-gray-900/50 h-32 overflow-y-auto">
-                    <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-2">
-                      <Activity size={14} /> Recent Detections
+                  {/* ALERTS FEED */}
+                  <div className="p-3 bg-gray-950/50 h-32 overflow-y-auto custom-scrollbar">
+                    <h4 className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                      <Activity size={12} /> Live Event Log
                     </h4>
 
-                    <div className="space-y-2">
-                      {/* Filter alerts for this specific camera and show the 3 most recent */}
-                      {alerts
-                        .filter((a) => a.cameraId === cam.id)
-                        .slice(0, 3)
-                        .map((alert) => (
-                          <div key={alert.id} className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-md animate-pulse">
-                            <span className="font-bold">{alert.message}</span>
-                            <span className="text-xs text-red-400/70 block mt-0.5">
-                              {new Date(alert.createdAt).toLocaleTimeString()}
-                            </span>
-                          </div>
-                        ))}
-
-                      {/* Empty state if no alerts yet */}
+                    <div className="space-y-1.5">
+                      {alerts.filter((a) => a.cameraId === cam.id).slice(0, 4).map((alert) => (
+                        <div key={alert.id} className="text-sm border-l-2 border-red-500 bg-gradient-to-r from-red-500/10 to-transparent pl-3 py-1.5 pr-2 animate-in slide-in-from-left-2 duration-300">
+                          <span className="font-medium text-red-400">{alert.message}</span>
+                          <span className="text-[10px] text-gray-500 block">
+                            {new Date(alert.createdAt).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))}
                       {alerts.filter((a) => a.cameraId === cam.id).length === 0 && (
-                        <p className="text-xs text-gray-600 italic">No recent activity</p>
+                        <p className="text-xs text-gray-600 italic px-2">Monitoring active. No events.</p>
                       )}
                     </div>
                   </div>
