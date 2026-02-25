@@ -74,9 +74,8 @@ func startStream(cam Camera) {
 	// The MediaMTX server is running on localhost:8554 via Docker
 	mediaMtxURL := "rtsp://localhost:8554/" + cam.ID
 
-	// Command: ffmpeg -re -i [SOURCE] -c:v libx264 -preset ultrafast -f rtsp [DESTINATION]
-	cmd := exec.Command("ffmpeg", "-re", "-i", cam.RTSPUrl, "-c:v", "libx264", "-preset", "ultrafast", "-bf", "0", "-an", "-f", "rtsp", mediaMtxURL)
-
+	// Command: ffmpeg -stream_loop -1 -re -i [SOURCE]  -c:v libx264 -preset ultrafast -f rtsp [DESTINATION]
+	cmd := exec.Command("ffmpeg", "-stream_loop", "-1", "-re", "-i", cam.RTSPUrl, "-c:v", "libx264", "-preset", "ultrafast", "-bf", "0", "-an", "-f", "rtsp", mediaMtxURL)
 	// Save the command so we can kill it later if the user deletes the camera
 	activeStreams[cam.ID] = cmd
 

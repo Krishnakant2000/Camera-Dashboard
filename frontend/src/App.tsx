@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2 } from 'lucide-react';
 import type { Camera } from './types';
 import AddCameraModal from './components/AddCameraModal';
+import WebRTCPlayer from './components/WebRTCPlayer';
 
 function App() {
   const [cameras, setCameras] = useState<Camera[]>([]);
@@ -95,14 +96,16 @@ function App() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {cameras.map((cam) => (
                 <div key={cam.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col">
-                  {/* VIDEO PLACEHOLDER (Will be replaced by WebRTC player) */}
+                  {/* LIVE VIDEO PLAYER */}
                   <div className="aspect-video bg-black relative flex items-center justify-center border-b border-gray-800">
-                    <span className="text-gray-700 font-mono text-sm">STREAM OFFLINE</span>
-                    <div className="absolute top-3 right-3 flex items-center gap-2">
-                      <span className="flex h-3 w-3 relative">
+                    <WebRTCPlayer cameraId={cam.id} />
+                    {/* Live Indicator overlay */}
+                    <div className="absolute top-3 right-3 flex items-center gap-2 bg-black/50 px-2 py-1 rounded text-xs font-bold tracking-widest text-green-500">
+                      <span className="flex h-2 w-2 relative">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                       </span>
+                      LIVE
                     </div>
                   </div>
 
