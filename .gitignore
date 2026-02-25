@@ -59,3 +59,12 @@ worker/bin/
 *.njsproj
 *.sln
 *.sw?
+
+# =========================
+# AI Worker Artifacts
+# =========================
+worker/frames/
+worker/cascades/
+*.jpg
+*.jpeg
+*.png
