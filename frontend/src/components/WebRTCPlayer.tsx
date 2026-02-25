@@ -8,48 +8,52 @@ export default function WebRTCPlayer({ cameraId }: Props) {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
-        // 1. Create a new WebRTC Connection
-        const peerConnection = new RTCPeerConnection();
+        let peerConnection = new RTCPeerConnection();
+        let retryTimeout: ReturnType<typeof setTimeout>;
 
-        // 2. Tell the connection we only want to RECEIVE video/audio
-        peerConnection.addTransceiver('video', { direction: 'recvonly' });
-        peerConnection.addTransceiver('audio', { direction: 'recvonly' });
-
-        // 3. When the video stream arrives, attach it to our <video> HTML element
-        peerConnection.ontrack = (event) => {
-            if (videoRef.current && event.streams[0]) {
-                videoRef.current.srcObject = event.streams[0];
+        const setupConnection = async () => {
+            // Re-initialize for retries
+            if (peerConnection.signalingState === 'closed') {
+                peerConnection = new RTCPeerConnection();
             }
-        };
 
-        // 4. The Signaling Process (The "Handshake" with MediaMTX)
-        const negotiateStream = async () => {
+            peerConnection.addTransceiver('video', { direction: 'recvonly' });
+            peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+
+            peerConnection.ontrack = (event) => {
+                if (videoRef.current && event.streams[0]) {
+                    videoRef.current.srcObject = event.streams[0];
+                }
+            };
+
             try {
-                // Create an offer and set it locally
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
 
-                // Send the offer to MediaMTX's WHEP endpoint
                 const response = await fetch(`http://localhost:8889/${cameraId}/whep`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/sdp' },
                     body: offer.sdp,
                 });
 
-                if (!response.ok) throw new Error("Stream not available yet");
+                if (!response.ok) throw new Error("Stream not ready");
 
-                // Receive the answer and set it
                 const answerSdp = await response.text();
                 await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+                console.log(`🟢 WebRTC Connected for ${cameraId}`);
             } catch (error) {
-                console.error(`WebRTC Connection failed for ${cameraId}:`, error);
+                console.log(`⏳ Waiting for Go Worker to start stream ${cameraId}... retrying in 2s`);
+                // If it fails, close this attempt and try again in 2 seconds
+                peerConnection.close();
+                retryTimeout = setTimeout(setupConnection, 2000);
             }
         };
 
-        negotiateStream();
+        setupConnection();
 
-        // Cleanup when the component is removed from the screen
         return () => {
+            clearTimeout(retryTimeout);
             peerConnection.close();
         };
     }, [cameraId]);

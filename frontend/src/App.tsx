@@ -145,15 +145,25 @@ function App() {
 
                   {/* VIDEO PLAYER (No changes here) */}
                   <div className="aspect-video bg-black relative flex items-center justify-center border-b border-gray-800 group-hover:border-gray-700 transition-colors">
-                    <WebRTCPlayer cameraId={cam.id} />
 
-                    <div className="absolute top-3 right-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest text-green-500 border border-green-500/20">
-                      <span className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                      </span>
-                      LIVE
-                    </div>
+                    {cam.status === 'active' ? (
+                      <>
+                        <WebRTCPlayer cameraId={cam.id} />
+                        <div className="absolute top-3 right-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest text-green-500 border border-green-500/20">
+                          <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                          LIVE
+                        </div>
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 text-gray-500">
+                        <Power size={32} className="mb-2 opacity-50" />
+                        <span className="font-mono text-xs tracking-widest uppercase">Stream Paused</span>
+                      </div>
+                    )}
+
                   </div>
 
                   {/* POLISHED CARD HEADER & CONTROLS */}
