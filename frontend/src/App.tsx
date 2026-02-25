@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2 } from 'lucide-react';
-import type { Camera } from './types';
+import type { Alert, Camera } from './types';
 import AddCameraModal from './components/AddCameraModal';
 import WebRTCPlayer from './components/WebRTCPlayer';
 
 function App() {
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -21,6 +22,29 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  // Listen for Real-Time Alerts via WebSockets
+  useEffect(() => {
+    // Connect to the Hono WebSocket route
+    const ws = new WebSocket('ws://localhost:3000/ws');
+
+    ws.onopen = () => console.log('🟢 Connected to AI Alert Stream');
+
+    ws.onmessage = (event) => {
+      const newAlert = JSON.parse(event.data);
+      console.log("🚨 Received Alert:", newAlert);
+
+      // Add the new alert to the top of our list
+      setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
+    };
+
+    ws.onclose = () => console.log('🔴 Disconnected from Alert Stream');
+
+    // Cleanup when component unmounts
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   // Delete a camera
   const handleDelete = async (id: string) => {
@@ -110,7 +134,7 @@ function App() {
                   </div>
 
                   {/* CAMERA CARD FOOTER */}
-                  <div className="p-4 flex items-center justify-between">
+                  <div className="p-4 flex items-center justify-between border-b border-gray-800">
                     <div>
                       <h3 className="font-medium text-gray-200">{cam.name}</h3>
                       <p className="text-xs text-gray-500">{cam.location || 'Unknown location'}</p>
@@ -120,6 +144,33 @@ function App() {
                       className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                       <Trash2 size={18} />
                     </button>
+                  </div>
+
+                  {/* REAL-TIME ALERTS FEED */}
+                  <div className="p-4 bg-gray-900/50 h-32 overflow-y-auto">
+                    <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-2">
+                      <Activity size={14} /> Recent Detections
+                    </h4>
+
+                    <div className="space-y-2">
+                      {/* Filter alerts for this specific camera and show the 3 most recent */}
+                      {alerts
+                        .filter((a) => a.cameraId === cam.id)
+                        .slice(0, 3)
+                        .map((alert) => (
+                          <div key={alert.id} className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-md animate-pulse">
+                            <span className="font-bold">{alert.message}</span>
+                            <span className="text-xs text-red-400/70 block mt-0.5">
+                              {new Date(alert.createdAt).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        ))}
+
+                      {/* Empty state if no alerts yet */}
+                      {alerts.filter((a) => a.cameraId === cam.id).length === 0 && (
+                        <p className="text-xs text-gray-600 italic">No recent activity</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
