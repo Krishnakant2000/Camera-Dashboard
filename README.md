@@ -73,14 +73,14 @@ npm run dev           # Starts on http://localhost:5173
 
 ### Usage Instructions
 
-1. # Access the System: Navigate to http://localhost:5173 and click "Register" to create your admin account. You will be automatically logged in.
-2. # Add a Camera: Click "Add Camera" in the top right.
-3. # Test Stream: To test the system without a physical IP camera, use this public MP4 stream link in the RTSP URL field:
+1. **Access the System:** Navigate to http://localhost:5173 and click "Register" to create your admin account. You will be automatically logged in.
+2. **Add a Camera:** Click "Add Camera" in the top right.
+3. **Test Stream:** To test the system without a physical IP camera, use this public MP4 stream link in the RTSP URL field:
 ```bash
 http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
 ```
 
-4. # Monitor: Watch as the Go Worker spins up FFmpeg, the WebRTC video appears in your dashboard, and real-time AI alerts begin populating under the video feed!
+4. **Monitor:** Watch as the Go Worker spins up FFmpeg, the WebRTC video appears in your dashboard, and real-time AI alerts begin populating under the video feed!
 
 ### 🛡️ License
-## This project is for educational and portfolio purposes.
+This project is for educational and portfolio purposes.
