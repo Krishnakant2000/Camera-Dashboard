@@ -85,6 +85,17 @@ app.post('/auth/login', async (c) => {
     return c.json({ token })
 })
 
+// --- INTERNAL WORKER ROUTE ---
+// The Go Worker calls this. (In a real app, this will be protected with a static API_KEY header!)
+app.get('/worker/cameras', async (c) => {
+    try {
+        const cameras = await prisma.camera.findMany()
+        return c.json(cameras)
+    } catch (e) {
+        return c.json({ error: 'Failed to fetch' }, 500)
+    }
+})
+
 // --- PROTECT THE API ---
 // This middleware acts as a bouncer. Any route below this line REQUIRES a valid JWT token.
 app.use('/cameras/*', jwt({

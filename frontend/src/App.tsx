@@ -93,10 +93,12 @@ function App() {
     }
   };
 
-  // Run once when the app loads
+  // Run when the app loads, OR when the token changes (user logs in)
   useEffect(() => {
-    fetchCameras();
-  }, []);
+    if (token) {
+      fetchCameras();
+    }
+  }, [token]);
 
   // THE SHIELD: If no token, only show Login!
   if (!token) {
@@ -110,7 +112,7 @@ function App() {
       <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
         <div className="flex items-center gap-3 mb-8 px-2 text-blue-400">
           <Activity size={28} />
-          <h1 className="text-xl font-bold text-white">Camera Dashboard</h1>
+          <h1 className="text-xl font-bold text-white">VisionOS</h1>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -123,6 +125,15 @@ function App() {
             <span className="font-medium">All Cameras</span>
           </button>
         </nav>
+        <div className="mt-auto pt-4 border-t border-gray-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded-lg transition-colors"
+          >
+            <Power size={20} />
+            <span className="font-medium">Logout System</span>
+          </button>
+        </div>
       </aside>
 
       {/* MAIN CONTENT */}

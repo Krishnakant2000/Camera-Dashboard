@@ -71,7 +71,7 @@ func setupAI() {
 
 // --- POLLING NODE.JS API ---
 func fetchAndProcessCameras() {
-	resp, err := http.Get("http://localhost:3000/cameras")
+	resp, err := http.Get("http://localhost:3000/worker/cameras")
 	if err != nil {
 		return
 	}
