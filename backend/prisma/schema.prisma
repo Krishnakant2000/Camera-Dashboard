@@ -12,7 +12,7 @@ generator client {
 model User {
   id        String   @id @default(uuid())
   username  String   @unique
-  password  String   // In a real app, this should be hashed!
+  password  String   
   createdAt DateTime @default(now())
 }
 

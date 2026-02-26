@@ -4,8 +4,12 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { prisma } from './db'
 import { createNodeWebSocket } from '@hono/node-ws'
+import { jwt, sign } from 'hono/jwt'
+import bcrypt from 'bcryptjs'
 
 const app = new Hono()
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Initialize WebSocket helper for Node.js
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app })
@@ -37,6 +41,55 @@ app.get('/ws', upgradeWebSocket((c) => {
             console.log('Message from frontend:', event.data)
         }
     }
+}))
+
+// --- AUTH ROUTES ---
+
+// Register a new admin (You'll only use this once to create your account)
+app.post('/auth/register', async (c) => {
+    const { username, password } = await c.req.json()
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+
+    try {
+        const user = await prisma.user.create({
+            data: { username, password: hashedPassword }
+        })
+        return c.json({ message: 'User created successfully' }, 201)
+    } catch (error) {
+        return c.json({ error: 'Username might already exist' }, 400)
+    }
+})
+
+// Login to get the JWT Token
+app.post('/auth/login', async (c) => {
+    const { username, password } = await c.req.json()
+
+    const user = await prisma.user.findUnique({ where: { username } })
+    if (!user) return c.json({ error: 'Invalid credentials' }, 401)
+
+    // Compare passwords
+    const isValid = await bcrypt.compare(password, user.password)
+    if (!isValid) return c.json({ error: 'Invalid credentials' }, 401)
+
+    // Generate the Token badge
+    const payload = {
+        id: user.id,
+        username: user.username,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Token expires in 24 hours
+    }
+    const token = await sign(payload, JWT_SECRET)
+
+    return c.json({ token })
+})
+
+// --- PROTECT THE API ---
+// This middleware acts as a bouncer. Any route below this line REQUIRES a valid JWT token.
+app.use('/cameras/*', jwt({
+    secret: JWT_SECRET,
+    alg: 'HS256'
 }))
 
 // --- CAMERA ROUTES ---
