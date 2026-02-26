@@ -24,7 +24,10 @@ export default function AddCameraModal({ isOpen, onClose, onSuccess }: Props) {
         try {
             const res = await fetch('http://localhost:3000/cameras', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('vision_token')}`
+                },
                 body: JSON.stringify({ name, rtspUrl, location }),
             });
 

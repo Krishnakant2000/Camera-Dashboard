@@ -3,17 +3,32 @@ import { Camera as CameraIcon, Plus, Activity, LayoutGrid, Trash2, Brain, Power 
 import type { Alert, Camera } from './types';
 import AddCameraModal from './components/AddCameraModal';
 import WebRTCPlayer from './components/WebRTCPlayer';
+import Login from './components/Login';
 
 function App() {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('vision_token'));
+
+  const handleLogin = (newToken: string) => {
+    localStorage.setItem('vision_token', newToken);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('vision_token');
+    setToken(null);
+  };
 
   // Fetch cameras from our Hono Backend
   const fetchCameras = async () => {
     try {
-      const res = await fetch('http://localhost:3000/cameras');
+      const res = await fetch('http://localhost:3000/cameras', {
+        headers: { 'Authorization': `Bearer ${token}` } // <-- THE BADGE
+      });
+      if (res.status === 401) return handleLogout(); // Kick user out if token is expired
       const data = await res.json();
       setCameras(data);
     } catch (error) {
@@ -49,15 +64,12 @@ function App() {
   // Delete a camera
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to remove this camera?")) return;
-
     try {
       const res = await fetch(`http://localhost:3000/cameras/${id}`, {
         method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      if (res.ok) {
-        fetchCameras(); // Refresh the grid to remove the deleted camera
-      }
+      if (res.ok) fetchCameras();
     } catch (error) {
       console.error("Failed to delete camera:", error);
     }
@@ -65,21 +77,17 @@ function App() {
 
   // Toggle Camera Settings (AI or Stream Status)
   const handleToggle = async (id: string, field: 'status' | 'aiEnabled', currentValue: any) => {
-    let newValue;
-    if (field === 'status') {
-      newValue = currentValue === 'active' ? 'inactive' : 'active';
-    } else {
-      newValue = !currentValue;
-    }
-
+    let newValue = field === 'status' ? (currentValue === 'active' ? 'inactive' : 'active') : !currentValue;
     try {
       const res = await fetch(`http://localhost:3000/cameras/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ [field]: newValue }),
       });
-
-      if (res.ok) fetchCameras(); // Refresh UI instantly
+      if (res.ok) fetchCameras();
     } catch (error) {
       console.error(`Failed to toggle ${field}:`, error);
     }
@@ -89,6 +97,11 @@ function App() {
   useEffect(() => {
     fetchCameras();
   }, []);
+
+  // THE SHIELD: If no token, only show Login!
+  if (!token) {
+    return <Login onLoginSuccess={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex">
