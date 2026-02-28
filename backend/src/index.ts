@@ -145,8 +145,21 @@ app.post('/cameras', async (c) => {
 // DELETE: Remove a camera
 app.delete('/cameras/:id', async (c) => {
     const id = c.req.param('id')
-    await prisma.camera.delete({ where: { id } })
-    return c.json({ success: true })
+
+    try {
+        // Run both deletes in a transaction so they succeed or fail together
+        await prisma.$transaction([
+            // 1. Delete all alerts tied to this camera first
+            prisma.alert.deleteMany({ where: { cameraId: id } }),
+            // 2. Now it is safe to delete the camera
+            prisma.camera.delete({ where: { id } })
+        ])
+
+        return c.json({ success: true })
+    } catch (e) {
+        console.error("Failed to delete camera:", e)
+        return c.json({ error: 'Failed to delete camera' }, 500)
+    }
 })
 
 // PATCH: Update a camera's settings (Toggle AI or Status)
